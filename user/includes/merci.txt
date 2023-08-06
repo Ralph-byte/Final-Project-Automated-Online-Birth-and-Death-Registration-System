@@ -1,0 +1,31 @@
+ if (isset($result->data->status) && $result->data->status === 'success') {
+        // Read properties from the response and store them in variables for insertion into the database
+        $status = $result->data->status;
+        $reference = $result->data->reference;
+        $firstName = $result->data->customer->first_name;
+        $lastName = $result->data->customer->last_name;
+        $fullName = $firstName . ' ' . $lastName;
+        $cisMail = $result->data->customer->email;
+        $dateTime = $result->data->created_at;
+
+        // DB_Connection
+        $conn = new mysqli('localhost', 'root', '', 'paystack_payment');
+        if (!$conn) {
+            echo 'not connected' . mysqli_error($conn);
+            exit;
+        }
+
+        $stmt = $conn->prepare("INSERT INTO customer_details (status, reference, fullname, date_purchased, email) VALUES(?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssss", $status, $reference, $fullName, $dateTime, $cisMail);
+
+        if (!$stmt->execute()) {
+            echo 'Error: ' . $stmt->error;
+            exit;
+        }
+
+        $stmt->close();
+        $conn->close();
+
+        // Redirect to the success.php page
+        header("Location: success.php?status=success");
+        exit;
